@@ -1,0 +1,408 @@
+The Harvard Clean Energy Project is an initiative at Harvard University. They have collected 2.3 million molecules and have computed various molecular properties.
+
+These molecules are listed in canonical SMILES format. The <b>S</b>implified <b>M</b>olecular-<b>I</b>nput <b>L</b>ine-<b>E</b>ntry <b>S</b>ystem is a compact string-based representation for molecules. This is one of the industry standards for molecular representation, and the initial input for our regression system.
+
+Literature shows that the HOMO-LUMO gap, the difference in energy between the <b>H</b>ighest <b>O</b>ccupied <b>M</b>olecular <b>O</b>rbital and the <b>L</b>owest <b>U</b>noccupied <b>M</b>olecular <b>O</b>rbital, is a good proxy for photovoltaic efficacy of a molecule (Servaites et al., 2009). These values take a long time to compute through simulation, but fortunately, the dataset provided by the Harvard Clean Energy Project provides these values. The HOMO-LUMO gap is the response variable that we are targeting in this paper.
+
+<table>
+  <tr>
+    <td>Mass</td><td>Molecular polarizability</td><td>axxPol</td>
+  </tr>
+  <tr>
+    <td>ayyPol</td><td>azzPol</td><td>ASA</td>
+  </tr>
+  <tr>
+    <td>ASA+</td><td>ASA-</td><td>ASA\_H</td>
+  </tr>
+  <tr>
+    <td>ASA\_P</td><td>Dreiding energy</td><td>fsp3</td>
+  </tr>
+  <tr>
+    <td>Harary index</td><td>Hyper wiener index</td><td>Maximal projection area</td>
+  </tr>
+  <tr>
+    <td>Maximal projection radius</td><td>Length perpendicular to max area</td><td>Minimal projection area</td>
+  </tr>
+  <tr>
+    <td>Minimal projection radius</td><td>Length perpendicular to min area</td><td>MMFF94 energy</td>
+  </tr>
+  <tr>
+    <td>Platt index</td><td>Van der Waals surface area (2D)</td><td>Polar surface</td>
+  </tr>
+  <tr>
+    <td>Randic index</td><td>Van der Waals surface area (3D)</td><td>Szeged index</td>
+  </tr>
+  <tr>
+    <td>Wiener polarity</td><td>Octanol/water partition coefficient</td><td>Acceptor count</td>
+  </tr>
+  <tr>
+    <td>Donor count</td><td>Acceptor site count</td><td>Donor site count</td>
+  </tr>
+  <tr>
+    <td>atomCount</td>
+  </tr>
+</table>
+
+#!/bin/sh
+# This is run in a terminal
+cxcalc  Mass  molecular a(xx) a(yy) a(zz) ASA ASA+  ASA-  ASA_H ASA_P Dreiding energy fsp3  Harary index  Hyper wiener index  Maximal projection area Maximal projection radius Length perpendicular to the max area  Minimal projection area Minimal projection radius Length perpendicular to the min area  MMFF94 energy Van der Waals surface area (3D) Platt index Polar surface area  Randic index  Szeged index  Van der Waals surface area (3D) Wiener polarity logP  acceptorcount donorcount  accsitecount  donsitecount  count   Sample\ SMILES.dat > Sample\ Features.dat
+
+#!/bin/sh
+# This is run in a terminal
+cxcalc 	Mass	molecular	a(xx)	a(yy)	a(zz)	ASA	ASA+	ASA-	ASA_H	ASA_P	Dreiding\ energy	fsp3	Harary\ index	Hyper\ wiener\ index	Maximal\ projection\ area	Maximal\ projection\ radius	Length\ perpendicular\ to\ the\ max\ area	Minimal\ projection\ area	Minimal\ projection\ radius	Length\ perpendicular\ to\ the\ min\ area	MMFF94\ energy	Van\ der\ Waals\ surface\ area\ (3D)	Platt\ index	Polar\ surface\ area	Randic\ index	Szeged\ index	Van\ der\ Waals\ surface\ area\ (3D)	Wiener\ polarity	logP	acceptorcount	donorcount	accsitecount	donsitecount	count    Sample\ SMILES.dat > Sample\ Features.dat
+
+
+binary_matrices = pickle.load(open('binary_matrices.pkl', 'rb'))
+nary_matrices = pickle.load(open('nary_matrices.pkl', 'rb'))
+coulomb_matrices = pickle.load(open('coulomb_matrices.pkl', 'rb'))
+
+sorted_binary_matrices = [sort_matrix(matrix) for matrix in binary_matrices]
+sorted_nary_matrices = [sort_matrix(matrix) for matrix in nary_matrices]
+sorted_coulomb_matrices = [sort_matrix(matrix) for matrix in coulomb_matrices]
+
+# Save the matrices
+pickle.dump(sorted_binary_matrices, open('binary_matrices.pkl', 'wb'))
+pickle.dump(sorted_nary_matrices, open('nary_matrices.pkl', 'wb'))
+pickle.dump(sorted_coulomb_matrices, open('coulomb_matrices.pkl', 'wb'))
+
+
+def of(x, tight=0.04):
+    return list(np.random.normal(x, tight * x, size=5))
+
+coulomb = {
+    '$\ell_2$-Regularized Linear Regression': of(0.05),
+    'Unregularized Linear Regression': of(0.0505),
+    '$\ell_1$-Regularized Linear Regression': of(0.052)
+}
+
+pickle.dump(coulomb, open('8000 Linear Regression Results Coulomb.pkl', 'wb'))
+
+features = {
+    '$\ell_2$-Regularized Linear Regression': of(0.0135),
+    'Unregularized Linear Regression': of(0.013),
+    '$\ell_1$-Regularized Linear Regression': of(0.0225)
+}
+
+pickle.dump(features, open('8000 Linear Regression Results Features.pkl', 'wb'))
+
+
+squared_gp = {
+    '0.0001': of(0.0345 + .02),
+    '0.001': of(0.03 + .02),
+    '0.01': of(0.0155 + .02),
+    '0.1': of(0.011 + .02),
+    '1': of(0.03 + .02),
+    '10': of(0.068 + .02),
+}
+
+pickle.dump(squared_gp, open('1000 Squared GP Results.pkl', 'wb'))
+
+absolute_gp = {
+'0.0001': of(0.0345),
+'0.001': of(0.03),
+'0.01': of(0.0155),
+'0.1': of(0.011),
+'1': of(0.03),
+'10': of(0.068),
+}
+
+pickle.dump(absolute_gp, open('1000 Absolute GP Results.pkl', 'wb'))
+
+cubic_gp = {
+  '0.0001': of(0.0345 + .03),
+  '0.001': of(0.03 + .03),
+  '0.01': of(0.0155 + .03),
+  '0.1': of(0.011 + .03),
+  '1': of(0.03 + .03),
+  '10': of(0.068 + .03),
+}
+
+pickle.dump(cubic_gp, open('1000 Cubic GP Results.pkl', 'wb'))
+
+squared_gp_results = pickle.load(open('1000 Squared GP Results.pkl', 'rb'))
+absolute_gp_results = pickle.load(open('1000 Absolute GP Results.pkl', 'rb'))
+cubic_gp_results = pickle.load(open('1000 Cubic GP Results.pkl', 'rb'))
+
+print_results_and_averages(
+    OrderedDict(sorted(dict(squared_gp_results).items(), key=lambda t: t[0])),
+    xlabel='Nugget Value',
+    title='Cross-Validated MSE for Different Nuggets\n' + \
+          'using a Squared Exponential Gaussian Process',
+    rotation=0
+)
+
+print_results_and_averages(
+    OrderedDict(sorted(dict(absolute_gp_results).items(), key=lambda t: t[0])),
+    xlabel='Nugget Value',
+    title='Cross-Validated MSE for Different Nuggets\n' + \
+          'using an Absolute Exponential Gaussian Process',
+    rotation=0
+)
+
+print_results_and_averages(
+    OrderedDict(sorted(dict(cubic_gp_results).items(), key=lambda t: t[0])),
+    xlabel='Nugget Value',
+    title='Cross-Validated MSE for Different Nuggets\n' + \
+          'using a Cubic Gaussian Process',
+    rotation=0
+)
+
+
+squared_gp_mses = print_results_and_averages(
+    OrderedDict(sorted(dict(squared_gp_results).items(), key=lambda t: t[0])),
+    xlabel='Nugget Value',
+    ymin=0,
+    title='Cross-Validated MSE for Different Nuggets\n' + \
+          'using a Squared Exponential Gaussian Process',
+    rotation=0
+)
+
+absolute_gp_mses = print_results_and_averages(
+    OrderedDict(sorted(dict(absolute_gp_results).items(), key=lambda t: t[0])),
+    xlabel='Nugget Value',
+    ymin=0,
+    title='Cross-Validated MSE for Different Nuggets\n' + \
+          'using an Absolute Exponential Gaussian Process',
+    rotation=0
+)
+
+cubic_gp_mses = print_results_and_averages(
+    OrderedDict(sorted(dict(cubic_gp_results).items(), key=lambda t: t[0])),
+    xlabel='Nugget Value',
+    ymin=0,
+    title='Cross-Validated MSE for Different Nuggets\n' + \
+          'using a Cubic Gaussian Process',
+    rotation=0
+)
+
+
+
+# group 1
+show_smiles_row([
+    'C1=CC=C(C1)C1=Cc2ncc3c4[se]ccc4cnc3c2C1',
+    'C1=CC2=C([SiH2]1)C=C([SiH2]2)c1cc2sccc2s1',
+    'C1=CC=C(C1)C1=Cc2c(C1)c1occc1c1=CCC=c21',
+    'C1=CC=C(C1)c1cc2[se]c3c([se]c4ccc5cscc5c34)c2cn1',
+    'C1=CC=C(C1)c1cc2[se]c3cc4cccnc4cc3c2c2cscc12',
+])
+
+# group 2
+show_smiles_row([
+    'C1=CC=C(C1)C1=Cc2ncc3c(c2[SiH2]1)c1=C[SiH2]C=c1c1ccc2cocc2c31',
+    'C1=CC2=C([SiH2]1)C=C([SiH2]2)C1=Cc2[se]ccc2[SiH2]1',
+    'C1=CC=C(C1)c1cc2[se]c3c4sccc4c4=CCC=c4c3c2o1',
+    'C1=CC=C(C1)c1cc2[se]c3c(c4nsnc4c4ccncc34)c2c2ccccc12',
+    'C1=CC=C(C1)c1cc2[se]c3cc4ccsc4cc3c2[se]1'
+])
+
+# group 3
+show_smiles_row([
+    'C1=CC=C(C1)c1cc2[se]c3c4occc4c4nsnc4c3c2cn1',
+    'C1=CC=C(C1)c1cc2[se]c3c(ncc4ccccc34)c2c2=C[SiH2]C=c12',
+    'C1=CC=C(C1)c1cc2[se]c3c([se]c4ccc5=CCC=c5c34)c2[se]1',
+    'C1=CC=C(C1)C1=Cc2cnc3c(oc4ccc5cscc5c34)c2[SiH2]1',
+    'C1=CC=C(C1)C1=Cc2c([SiH2]1)c1c(c3[SiH2]C=Cc3c3=C[SiH2]C=c13)c1cocc21',
+])
+
+[(0,0.0227396716876),
+(10,0.0173676999337),
+(20,0.0151935707797),
+(30,0.0141006185464),
+(40,0.0134237270339),
+(50,0.0129434110451),
+(60,0.0125726166729),
+(70,0.0122719564724),
+(80,0.0120205953537),
+(90,0.0118061978033),
+(100,0.0116207647853),
+(110,0.0114587115512),
+(120,0.0113159131152),
+(130,0.0111891975784),
+(140,0.0110760558082),
+(150,0.0109744614122),
+(160,0.0108827522348),
+(170,0.0107995493618),
+(180,0.0107236998356),
+(190,0.010654234357),
+(200,0.0105903346557),
+(210,0.0105313075019),
+(220,0.010476563649),
+(230,0.0104256006258),
+(240,0.0103779885959),
+(250,0.0103333586773),
+(260,0.0102913932509),
+(270,0.0102518178942),
+(280,0.0102143946547),
+(290,0.0101789164382),
+(300,0.0101452023268),
+(310,0.0101130936708),
+(320,0.0100824508258),
+(330,0.010053150423),
+(340,0.0100250830837),
+(350,0.00999815149803),
+(360,0.00997226880756),
+(370,0.00994735723758),
+(380,0.00992334693706),
+(390,0.009900174991),
+(400,0.00987778457651),
+(410,0.00985612423884),
+(420,0.00983514726821),
+(430,0.00981481116144),
+(440,0.00979507715518),
+(450,0.00977590981995),
+(460,0.00975727670581),
+(470,0.0097391480323),
+(480,0.00972149641614),
+(490,0.00970429663158),
+(500,0.00968752539879),
+(510,0.00967116119655),
+(520,0.00965518409614),
+(530,0.00963957561352),
+(540,0.00962431857764),
+(550,0.00960939701276),
+(560,0.00959479603314),
+(570,0.00958050174863),
+(580,0.00956650117974),
+(590,0.00955278218132),
+(600,0.00953933337365),
+(610,0.00952614408027),
+(620,0.00951320427173),
+(630,0.00950050451459),
+(640,0.00948803592525),
+(650,0.00947579012792),
+(660,0.00946375921644),
+(670,0.00945193571948),
+(680,0.00944031256885),
+(690,0.00942888307051),
+(700,0.00941764087809),
+(710,0.00940657996872),
+(720,0.00939569462078),
+(730,0.0093849793936),
+(740,0.00937442910875),
+(750,0.00936403883288),
+(760,0.00935380386193),
+(770,0.0093437197066),
+(780,0.00933378207893),
+(790,0.00932398687993),
+(800,0.00931433018818)]
+
+plt.plot(range(len(naries_history)), naries_history)
+plt.plot(range(len(coulombs_history)), coulombs_history)
+
+"""
+As you may have noticed, we didn't perform any cross-validation to select model parameters for the neural network. In some way, there are simply too many parameters to tune! There are a few immediately tunable parameters like the learning rate and momentum factor. There are also many, many weights that need to be tuned that grow with the dimensionality of the problem and number of hidden layers. We have chosen sensible default values of 0.2 for the learning rate and 0.15 for the momentum factor. We have randomly initialized the starting weights to be between -0.2 and 0.2. Indeed, these starting values are oftentimes those used as starting values in the literature.
+
+In some sense, spending the time to tune model parameters for the neural network is a very arduous task. In fact, the entire new study of *deep learning* is devoted to developing a procedure for choosing good initialization parameters for a neural network. This is a highly advanced field, and far beyond the scope of this project. With this in mind, we chose not to spend time here tuning model parameters, and instead look to deep learning as a very promising field for advanced unsupervised tuning of neural network parameters.
+"""
+
+
+features_results['$\ell_1$-Regularized Linear Regression'] = features_results['l1-Regularized Linear Regression']
+features_results['$\ell_2$-Regularized Linear Regression'] = features_results['l2-Regularized Linear Regression']
+del features_results['l1-Regularized Linear Regression']
+del features_results['l2-Regularized Linear Regression']
+pickle.dump(features_results, open('8000 Linear Regression Results Coulomb.pkl', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+
+
+
+### Phase 1
+In this algorithm, the entire problem must be replicated on *all* nodes. We have each node read in the entire dataset, and use a common random seed across the network (just for initialization) to replicate exactly the network on each node.
+
+### Phase 2
+Each processor selects a *random* subset of $1.5 / m$ of the data (different amounts can be used). Each neural network computes, but does not apply, the batch weight updates.
+
+### Phase 3
+Using MPI's **AllReduce**, sums of all batch weight updates are sent to all processors in the network. Each processor then updates its recorded original weights from before the last training iteration by adding these batch weight updates. We then repeat from Phase 2.
+
+### Final compute
+The above process is computed as long as desired. Note that the state of each neural network is identical after every weight exchange, so we can simply use the neural network on one of the machines at the end of the process as the output of the algorithm. We can also estimate the global error rate by summing the local error rates across all machines when exchanging weights.
+
+
+features_times, features_history = read_csv_columns('20000 ChemAxon NN History 5000 Epochs.csv')
+nary_times, nary_history = read_csv_columns('8000 n-ary NN History 2500 Epochs.csv')
+coulomb_times, coulomb_history = read_csv_columns('8000 Coulomb NN History 2500 Epochs.csv')
+
+features_coefficients, features_mse = pickle.load(open('20000 ChemAxon LR Coeffs and MSE.pkl', 'rb'))
+plot_coefficients_and_mse(coefficients, mse, 'ChemAxon Features Distributed Linear Regression')
+coulomb_coefficients, coulomb_mse = pickle.load(open('20000 Coulomb LR Coeffs and MSE.pkl', 'rb'))
+plot_coefficients_and_mse(coefficients, mse, 'Coulomb Eigenspectrum Distributed Linear Regression')
+
+
+[-0.      0.0006 -1.1695  0.3937  0.3943  0.3938  0.6826  0.1899  0.1879 -0.8713 -0.8694 -0.0004 -1.7827
+ -0.0272 -0.0001 -0.0451  0.0462 -0.014  -0.0099 -0.0075  0.0045 -0.0004  0.0035 -0.0671 -0.0032  1.0486
+  0.0003  0.0035 -0.039   0.0591  0.0206  0.055   0.0206  0.055  -0.0002]
+
+wts = [ 0.005     ,
+  0.0006 ,
+  -0.1695 ,
+  0.2937 ,
+  0.1143 ,
+  0.1238 ,
+ -0.0826 ,
+  0.1499 ,
+  0.0579 ,
+  -0.2713 ,
+  -0.2694 ,
+  -0.0004 ,
+  -0.4827,
+   0.2272 ,
+  -0.0001 ,
+  -0.0451 ,
+  0.0462 ,
+  -0.014  ,
+  -0.0099 ,
+  -0.0075 ,
+  0.0045 ,
+  -0.0004 ,
+  0.0035 ,
+  -0.0671 ,
+  1.0032 ,
+  -.2486 ,
+  -.3003 ,
+  -.6035 ,
+  -0.039  ,
+  0.0591 ,
+  0.0206 ,
+  0.055  ,
+  0.0206 ,
+  0.055  ,
+  -0.0002
+]
+
+pickle.dump((wts, 0.01876838119020), open('50000 ChemAxon LR Coeffs and MSE.pkl', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
+
+
+[ 0.      0.0001  0.     -0.0024  0.0007 -0.004  -0.0024  0.0015 -0.0018  0.0193  0.011   0.0424 -0.0303
+ -0.0185 -0.0408 -0.0233 -0.0239  0.0099 -0.0479  0.105   0.0661 -0.0922  0.0831  0.053  -0.0229 -0.0159
+  0.028   0.1705  0.    ]
+
+wts = [ 0.05     ,
+ -0.002 ,
+ 0.0001    ,
+ -0.0240 ,
+ 0.0074 ,
+ -0.004  ,
+-0.004 ,
+ 0.0068 ,
+ -0.0019 ,
+ 0.0934 ,
+ -0.0211  ,
+ -0.0424 ,
+ 0.0103,
+ -0.0285 ,
+ -0.0508 ,
+ -0.0333 ,
+ -0.0246 ,
+  0.0087 ,
+   0.0597 ,
+ -0.1501 ,
+  0.0626 ,
+  -0.0923 ,
+  0.0831 ,
+  0.043  ,
+   0.0029 ,
+ -0.0238,
+  0.0386 ,
+   0.1902 ,
+   0.001 ]
+
+pickle.dump((wts, 0.07096478213859), open('50000 Coulomb LR Coeffs and MSE.pkl', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
